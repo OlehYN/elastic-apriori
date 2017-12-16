@@ -1,0 +1,66 @@
+package com.ukma.bigdata.yupro.apriori.service.impl;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
+import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
+import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
+
+public class ElasticAprioriStoreService implements AprioriStoreService<Long, Long> {
+
+	private Map<Integer, String> levelMap;
+
+	public ElasticAprioriStoreService(String hostName, String port, String indexName, String typePattern) {
+	}
+
+	@Override
+	public void init(TransactionProvider<Long, Long> transactionProvider) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public Iterator<Set<Long>> candidateIterator(int level) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterator<FrequentSet<Long>> frequentSetIterator(int level) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void removeCandidate(Set<Long> itemSet) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void saveCandidate(Set<Long> itemSet) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void updateCandidate(Set<Long> itemSet, double support) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public double getSupport(Set<Long> itemSet) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int getSize() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+}
