@@ -1,4 +1,4 @@
-package com.ukma.bigdata.yupro.apriori.service.impl.__tests__;
+package com.ukma.bigdata.yupro.apriori.service;
 
 import static org.junit.Assert.assertEquals;
 

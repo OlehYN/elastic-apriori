@@ -61,7 +61,7 @@ public class CsvTransactionProviderImpl implements TransactionProvider<Long, Lon
 
 		transaction.setTransactionKey(currentTransactionId);
 
-		while (currentTransactionId == transactionId) {
+		while (currentTransactionId.equals(transactionId)) {
 			items.add(currentTransactionValue);
 
 			try {
@@ -87,7 +87,6 @@ public class CsvTransactionProviderImpl implements TransactionProvider<Long, Lon
 			this.transactionValue = null;
 		}
 		transaction.setTransactionValue(items);
-
 		return transaction;
 	}
 
