@@ -21,13 +21,14 @@ public class GenericAprioriService<TransactionKey, TransactionValue>
 
 	@Override
 	public AprioriResult<TransactionValue> generateAprioriResult(
-			TransactionProvider<TransactionKey, TransactionValue> transactionProvider, int level) {
+			TransactionProvider<TransactionKey, TransactionValue> transactionProvider, int level, double support,
+			double confidence) {
 
 		aprioriStoreService.init(transactionProvider);
 
 		for (int i = 0; i < level; i++) {
 			evaluateService.evaluate(aprioriStoreService, i);
-			filterService.filter(aprioriStoreService, i);
+			filterService.filter(aprioriStoreService, i, support);
 			joinService.join(aprioriStoreService, i);
 			pruneService.prune(aprioriStoreService, i);
 		}
