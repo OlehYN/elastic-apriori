@@ -19,5 +19,5 @@ public interface AprioriStoreService<TransactionKey, TransactionValue> {
 
 	double getSupport(Set<TransactionValue> itemSet);
 
-	int getSize();
+	long getSize();
 }
