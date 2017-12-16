@@ -6,10 +6,9 @@ import java.util.Set;
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
 
 public interface AprioriStoreService<TransactionKey, TransactionValue> {
-	void init(TransactionProvider<TransactionKey, TransactionValue> transactionProvider);
 
 	Iterator<Set<TransactionValue>> candidateIterator(int level);
-	
+
 	Iterator<FrequentSet<TransactionValue>> frequentSetIterator(int level);
 
 	void removeCandidate(Set<TransactionValue> itemSet);

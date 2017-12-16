@@ -24,8 +24,6 @@ public class GenericAprioriService<TransactionKey, TransactionValue>
 			TransactionProvider<TransactionKey, TransactionValue> transactionProvider, int level, double support,
 			double confidence) {
 
-		aprioriStoreService.init(transactionProvider);
-
 		for (int i = 0; i < level; i++) {
 			evaluateService.evaluate(aprioriStoreService, i);
 			filterService.filter(aprioriStoreService, i, support);
