@@ -1,21 +1,13 @@
 package com.ukma.bigdata.yupro.apriori.service;
 
-import com.ukma.bigdata.yupro.apriori.ContextTest;
 import com.ukma.bigdata.yupro.apriori.config.Config;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.search.SearchHit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -23,11 +15,7 @@ import com.ukma.bigdata.yupro.apriori.service.impl.ElasticAprioriStoreService;
 import com.ukma.bigdata.yupro.apriori.service.impl.ElasticJoinServiceImpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.support.AnnotationConfigContextLoader;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 

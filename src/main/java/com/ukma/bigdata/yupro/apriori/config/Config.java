@@ -44,7 +44,7 @@ public class Config {
 
 	@Bean("transactionIndexName")
 	public String getTransactionIndexName() {
-		return ".candidate".intern();
+		return ".transaction".intern();
 	}
 
 	// @Bean("transactionProvider")
