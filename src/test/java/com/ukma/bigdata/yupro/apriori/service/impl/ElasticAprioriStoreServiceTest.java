@@ -1,14 +1,12 @@
-package com.ukma.bigdata.yupro.apriori.service;
+package com.ukma.bigdata.yupro.apriori.service.impl;
+
+import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-
-import org.junit.Test;
-
-import com.ukma.bigdata.yupro.apriori.service.impl.CsvTransactionProviderImpl;
-import com.ukma.bigdata.yupro.apriori.service.impl.ElasticAprioriStoreService;
 
 public class ElasticAprioriStoreServiceTest {
 

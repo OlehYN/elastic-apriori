@@ -26,7 +26,7 @@ public class GenericAprioriService<TransactionKey, TransactionValue>
 
 		for (int i = 0; i < level; i++) {
 			evaluateService.evaluate(i);
-			filterService.filter(aprioriStoreService, i, support);
+			filterService.filter(i, support);
 			joinService.join(aprioriStoreService, i);
 			pruneService.prune(aprioriStoreService, i);
 		}

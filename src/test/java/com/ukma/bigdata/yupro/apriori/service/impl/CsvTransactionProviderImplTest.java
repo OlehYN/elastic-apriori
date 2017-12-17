@@ -1,15 +1,13 @@
-package com.ukma.bigdata.yupro.apriori.service;
+package com.ukma.bigdata.yupro.apriori.service.impl;
 
-import static org.junit.Assert.assertEquals;
+import com.ukma.bigdata.yupro.apriori.model.Transaction;
+import org.junit.Test;
 
 import java.io.FileNotFoundException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.Test;
-
-import com.ukma.bigdata.yupro.apriori.model.Transaction;
-import com.ukma.bigdata.yupro.apriori.service.impl.CsvTransactionProviderImpl;
+import static org.junit.Assert.assertEquals;
 
 public class CsvTransactionProviderImplTest {
 
