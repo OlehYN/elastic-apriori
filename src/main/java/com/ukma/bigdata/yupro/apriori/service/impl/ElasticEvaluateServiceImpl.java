@@ -10,26 +10,25 @@ import com.ukma.bigdata.yupro.apriori.service.EvaluateService;
 
 public class ElasticEvaluateServiceImpl implements EvaluateService<Long, Long> {
 
-	@Autowired
-	private AprioriStoreService<Long, Long> aprioriStoreService;
+    @Autowired
+    private AprioriStoreService<Long, Long> aprioriStoreService;
 
-	public AprioriStoreService<Long, Long> getAprioriStoreService() {
-		return aprioriStoreService;
+    public AprioriStoreService<Long, Long> getAprioriStoreService() {
+	return aprioriStoreService;
+    }
+
+    public void setAprioriStoreService(AprioriStoreService<Long, Long> aprioriStoreService) {
+	this.aprioriStoreService = aprioriStoreService;
+    }
+
+    @Override
+    public void evaluate(int level) {
+	Iterator<Set<Long>> iterator = aprioriStoreService.candidateIterator(level);
+
+	while (iterator.hasNext()) {
+	    Set<Long> itemSet = iterator.next();
+	    double support = aprioriStoreService.countTransactions(itemSet) / aprioriStoreService.getSize();
+	    aprioriStoreService.updateCandidate(itemSet, support);
 	}
-
-	public void setAprioriStoreService(AprioriStoreService<Long, Long> aprioriStoreService) {
-		this.aprioriStoreService = aprioriStoreService;
-	}
-
-	@Override
-	public void evaluate(int level) {
-		Iterator<Set<Long>> iterator = aprioriStoreService.candidateIterator(level);
-
-		while (iterator.hasNext()) {
-			Set<Long> itemSet = iterator.next();
-			double support = aprioriStoreService.countTransactions(itemSet) / aprioriStoreService.getSize();
-			aprioriStoreService.updateCandidate(itemSet, support);
-		}
-	}
-
+    }
 }
