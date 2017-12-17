@@ -1,6 +1,7 @@
 package com.ukma.bigdata.yupro.apriori.service;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
@@ -22,4 +23,6 @@ public interface AprioriStoreService<TransactionKey, TransactionValue> {
 	long getSize();
 
 	long countTransactions(Set<TransactionValue> itemSet);
+
+	Set<Long> findOthers(List<Long> items);
 }

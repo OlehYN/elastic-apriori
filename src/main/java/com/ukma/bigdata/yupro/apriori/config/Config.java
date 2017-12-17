@@ -21,43 +21,37 @@ import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 
 @Configuration
 @ComponentScan(basePackages = "com.ukma.bigdata.yupro.apriori")
 public class Config {
 
-    @Bean
-    @Scope("singleton")
-    private TransportClient getTransportClient() throws UnknownHostException {
-        return new PreBuiltTransportClient(Settings.EMPTY)
-                .addTransportAddress(new TransportAddress(InetAddress.getByName(
-                        "192.168.0.33"), 5601));
-    }
+	@Bean("client")
+	public TransportClient getClient() throws UnknownHostException {
+		return new PreBuiltTransportClient(Settings.EMPTY)
+				.addTransportAddress(new TransportAddress(InetAddress.getByName("192.168.0.33"), 9300));
+	}
 
-    @Bean("candidateCache")
-    @Scope("singleton")
-    public Map<Integer, Queue<Set<Long>>> getCandidatesCache() {
-        return new HashMap<>();
-    }
+	@Bean("candidateCache")
+	public Map<Integer, Queue<Set<Long>>> getCandidatesCache() {
+		return new HashMap<>();
+	}
 
-    @Bean("candidateIndexName")
-    @Scope("singleton")
-    public String getCandidateIndexName() {
-        return ".candidate".intern();
-    }
+	@Bean("candidateIndexName")
+	public String getCandidateIndexName() {
+		return ".candidate".intern();
+	}
 
-    @Bean("transactionIndexName")
-    @Scope("singleton")
-    public String getTransactionIndexName() {
-        return ".candidate".intern();
-    }
+	@Bean("transactionIndexName")
+	public String getTransactionIndexName() {
+		return ".candidate".intern();
+	}
 
-//    @Bean("transactionProvider")
-//    @Scope("singleton")
-//    public TransactionProvider<Long, Long> getTransactionProvider() throws
-//            FileNotFoundException {
-//        return new CsvTransactionProviderImpl("test.csv", 0, 1, ',', '"');
-//    }
+	// @Bean("transactionProvider")
+	// @Scope("singleton")
+	// public TransactionProvider<Long, Long> getTransactionProvider() throws
+	// FileNotFoundException {
+	// return new CsvTransactionProviderImpl("test.csv", 0, 1, ',', '"');
+	// }
 
 }
