@@ -25,6 +25,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
+import com.ukma.bigdata.yupro.apriori.model.FrequentSetIterator;
 import com.ukma.bigdata.yupro.apriori.model.Transaction;
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
 import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
@@ -46,6 +47,10 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
     @Autowired
     @Qualifier("candidateCache")
     private Map<Integer, Queue<Set<Long>>> candidateCache;
+    
+    @Autowired
+    @Qualifier("frequentSetCache")
+    private Map<Integer, Queue<FrequentSet<Long>>> frequentSetCache;
 
     @Autowired
     @Qualifier("candidateIndexName")
@@ -116,8 +121,10 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 
     @Override
     public Iterator<FrequentSet<Long>> frequentSetIterator(int level) {
-	// TODO Auto-generated method stub
-	return null;
+	if (!frequentSetCache.containsKey(level)) {
+	    frequentSetCache.put(level, new LinkedList<>());
+	}
+	return new FrequentSetIterator(client, candidateIndexName, level);
     }
 
     public TransportClient getClient() {
