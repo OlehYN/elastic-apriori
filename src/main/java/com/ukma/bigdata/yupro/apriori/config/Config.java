@@ -5,6 +5,7 @@
  */
 package com.ukma.bigdata.yupro.apriori.config;
 
+import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
 import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
 import com.ukma.bigdata.yupro.apriori.service.impl.CsvTransactionProviderImpl;
 import java.io.FileNotFoundException;
@@ -36,6 +37,12 @@ public class Config {
     @Bean("candidateCache")
     @Scope("prototype")
     public Map<Integer, Queue<Set<Long>>> getCandidatesCache() {
+	return new HashMap<>();
+    }
+    
+    @Bean("frequentSetCache")
+    @Scope("prototype")
+    public Map<Integer, Queue<FrequentSet<Long>>> getFrequentSetCache() {
 	return new HashMap<>();
     }
 
