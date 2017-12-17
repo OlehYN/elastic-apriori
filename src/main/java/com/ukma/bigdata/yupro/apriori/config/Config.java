@@ -5,11 +5,59 @@
  */
 package com.ukma.bigdata.yupro.apriori.config;
 
+import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
+import com.ukma.bigdata.yupro.apriori.service.impl.CsvTransactionProviderImpl;
+import java.io.FileNotFoundException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 @Configuration
-@ComponentScan("com.ukma.bigdata.yupro.apriori")
+@ComponentScan(basePackages = "com.ukma.bigdata.yupro.apriori")
 public class Config {
-    
+
+    @Bean
+    @Scope("singleton")
+    private TransportClient getTransportClient() throws UnknownHostException {
+        return new PreBuiltTransportClient(Settings.EMPTY)
+                .addTransportAddress(new TransportAddress(InetAddress.getByName(
+                        "192.168.0.33"), 5601));
+    }
+
+    @Bean("candidateCache")
+    @Scope("singleton")
+    public Map<Integer, Queue<Set<Long>>> getCandidatesCache() {
+        return new HashMap<>();
+    }
+
+    @Bean("candidateIndexName")
+    @Scope("singleton")
+    public String getCandidateIndexName() {
+        return ".candidate".intern();
+    }
+
+    @Bean("transactionIndexName")
+    @Scope("singleton")
+    public String getTransactionIndexName() {
+        return ".candidate".intern();
+    }
+
+//    @Bean("transactionProvider")
+//    @Scope("singleton")
+//    public TransactionProvider<Long, Long> getTransactionProvider() throws
+//            FileNotFoundException {
+//        return new CsvTransactionProviderImpl("test.csv", 0, 1, ',', '"');
+//    }
+
 }
