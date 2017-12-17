@@ -23,35 +23,35 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @ContextConfiguration(classes = Config.class)
 public class ElasticAprioriStoreServiceTest {
 
-	@Autowired
-	private ElasticAprioriStoreService elasticAprioriStoreService;
+    @Autowired
+    private ElasticAprioriStoreService elasticAprioriStoreService;
 
-	@Autowired
-	private TransportClient client;
+    @Autowired
+    private TransportClient client;
 
-	@Test
-	public void testIndex() throws IOException, InterruptedException, ExecutionException {
-		Set<Long> itemSet = new HashSet<>();
-		itemSet.add(43L);
-		itemSet.add(83L);
-		itemSet.add(33L);
+    @Test
+    public void testIndex() throws IOException, InterruptedException, ExecutionException {
+	Set<Long> itemSet = new HashSet<>();
+	itemSet.add(43L);
+	itemSet.add(83L);
+	itemSet.add(33L);
 
-		/*
-		 * eass.saveCandidate(itemSet); eass.updateCandidate(itemSet, 0.7);
-		 */
-		System.out.println(client);
+	/*
+	 * eass.saveCandidate(itemSet); eass.updateCandidate(itemSet, 0.7);
+	 */
+	System.out.println(client);
 
-		/* eass.removeCandidate(itemSet); */
+	/* eass.removeCandidate(itemSet); */
 
-		ElasticJoinServiceImpl ejs = new ElasticJoinServiceImpl();
-		ejs.setAprioriStoreService(elasticAprioriStoreService);
-		ejs.join(0);
-	}
+	ElasticJoinServiceImpl ejs = new ElasticJoinServiceImpl();
+	ejs.setAprioriStoreService(elasticAprioriStoreService);
+	ejs.join(1);
+    }
 
-	// @Test
-	public void testIterator() {
-		System.out.println(elasticAprioriStoreService.toString());
-		// Iterator<Set<Long>> iterator =
-		// elasticAprioriStoreService.candidateIterator(0);
-	}
+    // @Test
+    public void testIterator() {
+	System.out.println(elasticAprioriStoreService.toString());
+	// Iterator<Set<Long>> iterator =
+	// elasticAprioriStoreService.candidateIterator(0);
+    }
 }
