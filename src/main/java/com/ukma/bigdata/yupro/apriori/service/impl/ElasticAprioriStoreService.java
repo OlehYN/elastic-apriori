@@ -1,203 +1,253 @@
 package com.ukma.bigdata.yupro.apriori.service.impl;
 
+import com.ukma.bigdata.yupro.apriori.model.CandidateIterator;
 import java.io.IOException;
-import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+
+import javax.annotation.PostConstruct;
 
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.transport.Transport;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
 import com.ukma.bigdata.yupro.apriori.model.Transaction;
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
 import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ElasticAprioriStoreService implements AprioriStoreService<Long, Long> {
 
-	private TransportClient client;
+    @Autowired
+    private TransportClient client;
 
-	private String candidateIndexName;
-	private String transactionIndexName;
+    @Autowired
+    @Qualifier("candidateCache")
+    private Map<Integer, Queue<Set<Long>>> candidateCache;
 
-	private static final String CANDIDATE_TYPE = "candidate";
-	private static final String TRANSACTION_TYPE = "transaction";
+    @Autowired
+    @Qualifier("candidateIndexName")
+    private String candidateIndexName;
 
-	private static final int transactionBufferSize = 5000;
+    @Autowired
+    @Qualifier("transactionIndexName")
+    private String transactionIndexName;
 
-	private long size = 0;
+    private final TransactionProvider<Long, Long> transactionProvider = new CsvTransactionProviderImpl("test.csv", 0, 1,
+	    ',', '"');
 
-	public ElasticAprioriStoreService(String hostName, int port, String candidateIndexName, String transactionIndexName,
-			TransactionProvider<Long, Long> transactionProvider)
-			throws IOException, InterruptedException, ExecutionException {
-		client = new PreBuiltTransportClient(Settings.EMPTY)
-				.addTransportAddress(new TransportAddress(InetAddress.getByName(hostName), port));
+    private static final String CANDIDATE_TYPE = "candidate";
+    private static final String TRANSACTION_TYPE = "transaction";
 
-		this.candidateIndexName = candidateIndexName;
-		this.transactionIndexName = transactionIndexName;
+    private static final int transactionBufferSize = 5000;
 
-		Transaction<Long, Long> transaction = transactionProvider.nextTransaction();
-		BulkRequestBuilder bulkRequest = client.prepareBulk();
+    private long size = 0;
 
-		int bulkSize = 0;
-		if (!client.admin().indices().exists(new IndicesExistsRequest(transactionIndexName)).get().isExists()) {
-			do {
-				if (bulkSize == transactionBufferSize) {
-					bulkSize = 0;
-					BulkResponse bulkResponse = bulkRequest.get();
-					if (bulkResponse.hasFailures()) {
-						throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
-					}
-					bulkRequest = client.prepareBulk();
-				}
+    public ElasticAprioriStoreService() throws Exception {
+    }
 
-				bulkRequest.add(client
-						.prepareIndex(transactionIndexName, TRANSACTION_TYPE,
-								String.valueOf(transaction.getTransactionKey()))
-						.setSource(jsonBuilder().startObject().field("transactionId", transaction.getTransactionKey())
-								.field("transactionValues", transaction.getTransactionValue()).endObject()));
+    @PostConstruct
+    public void init() throws IOException, InterruptedException, ExecutionException {
+	Transaction<Long, Long> transaction = transactionProvider.nextTransaction();
+	BulkRequestBuilder bulkRequest = client.prepareBulk();
 
-				++bulkSize;
-			} while ((transaction = transactionProvider.nextTransaction()) != null);
-
-			if (bulkSize != 0) {
-				BulkResponse bulkResponse = bulkRequest.get();
-				if (bulkResponse.hasFailures()) {
-					throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
-				}
-				bulkRequest = client.prepareBulk();
-			}
-		}
-		size = (int) client.prepareSearch(this.transactionIndexName).setIndicesOptions(IndicesOptions.strictExpand())
-				.setSize(0).execute().get().getHits().getTotalHits();
-	}
-
-	@Override
-	public Iterator<Set<Long>> candidateIterator(int level) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterator<FrequentSet<Long>> frequentSetIterator(int level) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public TransportClient getClient() {
-		return client;
-	}
-
-	@Override
-	public void removeCandidate(Set<Long> itemSet) {
-		SearchHits searchHits;
-		try {
-			searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
-					.setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		String id = searchHits.getAt(0).getId();
-
-		try {
-			client.prepareDelete(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE, id).execute().get();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	public void saveCandidate(Set<Long> itemSet) {
-		try {
-			String id = client.prepareIndex(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE)
-					.setSource(jsonBuilder().startObject().field("transactionValues", itemSet).endObject()).execute()
-					.get().getId();
-			System.out.println("created id: " + id);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	public void updateCandidate(Set<Long> itemSet, double support) {
-		SearchHits searchHits;
-		try {
-			searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
-					.setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		if (searchHits.getTotalHits() == 0L)
-			throw new IllegalArgumentException("itemSet does not exist");
-		String id = searchHits.getAt(0).getId();
-		try {
-			client.prepareIndex(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE, id).setSource(jsonBuilder()
-					.startObject().field("transactionValues", itemSet).field("support", support).endObject()).execute()
-					.get();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	public double getSupport(Set<Long> itemSet) {
-		SearchHits searchHits;
-		try {
-			searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
-					.setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+	int bulkSize = 0;
+	if (!client.admin().indices().exists(new IndicesExistsRequest(transactionIndexName)).get().isExists()) {
+	    do {
+		if (bulkSize == transactionBufferSize) {
+		    bulkSize = 0;
+		    BulkResponse bulkResponse = bulkRequest.get();
+		    if (bulkResponse.hasFailures()) {
+			throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
+		    }
+		    bulkRequest = client.prepareBulk();
 		}
 
-		if (searchHits.getTotalHits() == 0)
-			throw new IllegalArgumentException("itemSet does not exist");
-		return (double) searchHits.getAt(0).getSourceAsMap().get("support");
-	}
+		bulkRequest.add(client
+			.prepareIndex(transactionIndexName, TRANSACTION_TYPE,
+				String.valueOf(transaction.getTransactionKey()))
+			.setSource(jsonBuilder().startObject().field("transactionId", transaction.getTransactionKey())
+				.field("transactionValues", transaction.getTransactionValue()).endObject()));
 
-	private QueryBuilder generateQuery(Set<Long> itemSet) {
-		if (itemSet.size() == 0)
-			throw new IllegalArgumentException("Zero item set");
+		++bulkSize;
+	    } while ((transaction = transactionProvider.nextTransaction()) != null);
 
-		BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
-
-		for (Long id : itemSet)
-			queryBuilder.must(QueryBuilders.termQuery("transactionValues", id));
-
-		return queryBuilder;
-	}
-
-	@Override
-	public long getSize() {
-		return this.size;
-	}
-
-	public void close() {
-		client.close();
-	}
-
-	@Override
-	public long countTransactions(Set<Long> itemSet) {
-		try {
-			System.out.println(generateQuery(itemSet));
-			return client.prepareSearch(transactionIndexName).setIndicesOptions(IndicesOptions.strictExpand())
-					.setQuery(generateQuery(itemSet)).execute().get().getHits().getTotalHits();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+	    if (bulkSize != 0) {
+		BulkResponse bulkResponse = bulkRequest.get();
+		if (bulkResponse.hasFailures()) {
+		    throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
 		}
+		bulkRequest = client.prepareBulk();
+	    }
 	}
+	size = (int) client.prepareSearch(this.transactionIndexName).setIndicesOptions(IndicesOptions.strictExpand())
+		.setSize(0).execute().get().getHits().getTotalHits();
+    }
+
+    @Override
+    public Iterator<Set<Long>> candidateIterator(int level) {
+	if (!candidateCache.containsKey(level)) {
+	    candidateCache.put(level, new LinkedList<>());
+	}
+	return new CandidateIterator(client, candidateIndexName, level);
+    }
+
+    @Override
+    public Iterator<FrequentSet<Long>> frequentSetIterator(int level) {
+	// TODO Auto-generated method stub
+	return null;
+    }
+
+    public TransportClient getClient() {
+	return client;
+    }
+
+    @Override
+    public void removeCandidate(Set<Long> itemSet) {
+	SearchHits searchHits;
+	try {
+	    searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
+		    .setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+	String id = searchHits.getAt(0).getId();
+
+	try {
+	    client.prepareDelete(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE, id).execute().get();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+    }
+
+    @Override
+    public void saveCandidate(Set<Long> itemSet) {
+	try {
+	    String id = client.prepareIndex(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE)
+		    .setSource(jsonBuilder().startObject().field("transactionValues", itemSet).endObject()).execute()
+		    .get().getId();
+	    System.out.println("created id: " + id);
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+    }
+
+    @Override
+    public void updateCandidate(Set<Long> itemSet, double support) {
+	SearchHits searchHits;
+	try {
+	    searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
+		    .setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+	if (searchHits.getTotalHits() == 0L) {
+	    throw new IllegalArgumentException("itemSet does not exist");
+	}
+	String id = searchHits.getAt(0).getId();
+	try {
+	    client.prepareIndex(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE, id).setSource(jsonBuilder()
+		    .startObject().field("transactionValues", itemSet).field("support", support).endObject()).execute()
+		    .get();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+    }
+
+    @Override
+    public double getSupport(Set<Long> itemSet) {
+	SearchHits searchHits;
+	try {
+	    searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
+		    .setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+
+	if (searchHits.getTotalHits() == 0) {
+	    throw new IllegalArgumentException("itemSet does not exist");
+	}
+	return (double) searchHits.getAt(0).getSourceAsMap().get("support");
+    }
+
+    public QueryBuilder generateQuery(Collection<Long> itemSet) {
+	if (itemSet.size() == 0) {
+	    throw new IllegalArgumentException("Zero item set");
+	}
+
+	BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+
+	for (Long id : itemSet) {
+	    queryBuilder.must(QueryBuilders.termQuery("transactionValues", id));
+	}
+
+	return queryBuilder;
+    }
+
+    @Override
+    public long getSize() {
+	return this.size;
+    }
+
+    public void close() {
+	client.close();
+    }
+
+    @Override
+    public long countTransactions(Set<Long> itemSet) {
+	try {
+	    return client.prepareSearch(transactionIndexName).setIndicesOptions(IndicesOptions.strictExpand())
+		    .setQuery(generateQuery(itemSet)).execute().get().getHits().getTotalHits();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+    }
+
+    @Override
+    public Set<Long> findOthers(List<Long> items) {
+	Set<Long> result = new HashSet<>();
+	SearchHit[] searchHits;
+	try {
+	    searchHits = client.prepareSearch(candidateIndexName + items.size())
+		    .setIndicesOptions(IndicesOptions.strictExpand()).setQuery(generateQuery(items)).execute().get()
+		    .getHits().getHits();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+
+	for (SearchHit searchHit : searchHits) {
+	    List<Integer> intTransactionValues = (List<Integer>) searchHit.getSourceAsMap().get("transactionValues");
+	    List<Long> transactionValues = new ArrayList<>();
+	    Arrays.stream(intTransactionValues.stream().mapToLong(i -> i).toArray())
+		    .forEach(lValue -> transactionValues.add(lValue));
+	    transactionValues.removeAll(items);
+
+	    result.add(transactionValues.get(0));
+	}
+
+	return result;
+    }
 
 }
