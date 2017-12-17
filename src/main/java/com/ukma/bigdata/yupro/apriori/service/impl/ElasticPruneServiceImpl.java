@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
 import com.ukma.bigdata.yupro.apriori.service.PruneService;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ElasticPruneServiceImpl implements PruneService<Long, Long> {
 
     @Autowired

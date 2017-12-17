@@ -9,7 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Iterator;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FilterServiceImpl implements FilterService<Long, Long> {
 
     private static final Logger LOG = LoggerFactory.getLogger(FilterServiceImpl.class);

@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
 import com.ukma.bigdata.yupro.apriori.service.JoinService;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ElasticJoinServiceImpl implements JoinService<Long, Long> {
 
     @Autowired
