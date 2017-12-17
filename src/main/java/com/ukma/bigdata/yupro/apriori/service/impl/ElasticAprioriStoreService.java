@@ -47,7 +47,7 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
     @Autowired
     @Qualifier("candidateCache")
     private Map<Integer, Queue<Set<Long>>> candidateCache;
-    
+
     @Autowired
     @Qualifier("frequentSetCache")
     private Map<Integer, Queue<FrequentSet<Long>>> frequentSetCache;
@@ -197,6 +197,19 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 	    throw new IllegalArgumentException("itemSet does not exist");
 	}
 	return (double) searchHits.getAt(0).getSourceAsMap().get("support");
+    }
+
+    @Override
+    public boolean exists(Set<Long> itemSet) {
+	SearchHits searchHits;
+	try {
+	    searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
+		    .setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+
+	return searchHits.getTotalHits() != 0;
     }
 
     public QueryBuilder generateQuery(Collection<Long> itemSet) {

@@ -8,21 +8,23 @@ import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
 
 public interface AprioriStoreService<TransactionKey, TransactionValue> {
 
-	Iterator<Set<TransactionValue>> candidateIterator(int level);
+    Iterator<Set<TransactionValue>> candidateIterator(int level);
 
-	Iterator<FrequentSet<TransactionValue>> frequentSetIterator(int level);
+    Iterator<FrequentSet<TransactionValue>> frequentSetIterator(int level);
 
-	void removeCandidate(Set<TransactionValue> itemSet);
+    void removeCandidate(Set<TransactionValue> itemSet);
 
-	void saveCandidate(Set<TransactionValue> itemSet);
+    void saveCandidate(Set<TransactionValue> itemSet);
 
-	void updateCandidate(Set<TransactionValue> itemSet, double support);
+    void updateCandidate(Set<TransactionValue> itemSet, double support);
 
-	double getSupport(Set<TransactionValue> itemSet);
+    double getSupport(Set<TransactionValue> itemSet);
 
-	long getSize();
+    long getSize();
 
-	long countTransactions(Set<TransactionValue> itemSet);
+    long countTransactions(Set<TransactionValue> itemSet);
 
-	Set<Long> findOthers(List<Long> items);
+    boolean exists(Set<Long> itemSet);
+
+    Set<Long> findOthers(List<Long> items);
 }

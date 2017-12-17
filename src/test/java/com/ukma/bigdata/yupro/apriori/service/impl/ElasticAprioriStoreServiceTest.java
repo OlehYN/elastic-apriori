@@ -1,4 +1,4 @@
-package com.ukma.bigdata.yupro.apriori.service;
+package com.ukma.bigdata.yupro.apriori.service.impl;
 
 import com.ukma.bigdata.yupro.apriori.config.Config;
 
@@ -43,9 +43,13 @@ public class ElasticAprioriStoreServiceTest {
 
 	/* eass.removeCandidate(itemSet); */
 
-	ElasticJoinServiceImpl ejs = new ElasticJoinServiceImpl();
-	ejs.setAprioriStoreService(elasticAprioriStoreService);
-	ejs.join(1);
+	// ElasticJoinServiceImpl ejs = new ElasticJoinServiceImpl();
+	// ejs.setAprioriStoreService(elasticAprioriStoreService);
+	// ejs.join(1);
+
+	ElasticPruneServiceImpl eps = new ElasticPruneServiceImpl();
+	eps.setAprioriStoreService(elasticAprioriStoreService);
+	eps.prune(1);
     }
 
     // @Test
