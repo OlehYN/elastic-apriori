@@ -25,7 +25,7 @@ public class GenericAprioriService<TransactionKey, TransactionValue>
 			double confidence) {
 
 		for (int i = 0; i < level; i++) {
-			evaluateService.evaluate(aprioriStoreService, i);
+			evaluateService.evaluate(i);
 			filterService.filter(aprioriStoreService, i, support);
 			joinService.join(aprioriStoreService, i);
 			pruneService.prune(aprioriStoreService, i);

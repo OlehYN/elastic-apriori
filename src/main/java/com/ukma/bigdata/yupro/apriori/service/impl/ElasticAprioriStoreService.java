@@ -17,6 +17,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
@@ -97,19 +98,23 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 		return null;
 	}
 
+	public TransportClient getClient() {
+		return client;
+	}
+
 	@Override
 	public void removeCandidate(Set<Long> itemSet) {
 		SearchHits searchHits;
 		try {
-			searchHits = client.prepareSearch(candidateIndexName + itemSet.size()).setQuery(generateQuery(itemSet))
-					.setTypes(CANDIDATE_TYPE).execute().get().getHits();
+			searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
+					.setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 		String id = searchHits.getAt(0).getId();
 
 		try {
-			client.prepareDelete(candidateIndexName + itemSet.size(), CANDIDATE_TYPE, id).execute().get();
+			client.prepareDelete(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE, id).execute().get();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -118,7 +123,7 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 	@Override
 	public void saveCandidate(Set<Long> itemSet) {
 		try {
-			String id = client.prepareIndex(candidateIndexName + itemSet.size(), CANDIDATE_TYPE)
+			String id = client.prepareIndex(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE)
 					.setSource(jsonBuilder().startObject().field("transactionValues", itemSet).endObject()).execute()
 					.get().getId();
 			System.out.println("created id: " + id);
@@ -131,16 +136,16 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 	public void updateCandidate(Set<Long> itemSet, double support) {
 		SearchHits searchHits;
 		try {
-			searchHits = client.prepareSearch(candidateIndexName + itemSet.size()).setQuery(generateQuery(itemSet))
-					.setTypes(CANDIDATE_TYPE).execute().get().getHits();
+			searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
+					.setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		if (searchHits.getTotalHits() == 0)
+		if (searchHits.getTotalHits() == 0L)
 			throw new IllegalArgumentException("itemSet does not exist");
 		String id = searchHits.getAt(0).getId();
 		try {
-			client.prepareIndex(candidateIndexName + itemSet.size(), CANDIDATE_TYPE, id).setSource(jsonBuilder()
+			client.prepareIndex(candidateIndexName + (itemSet.size() - 1), CANDIDATE_TYPE, id).setSource(jsonBuilder()
 					.startObject().field("transactionValues", itemSet).field("support", support).endObject()).execute()
 					.get();
 		} catch (Exception e) {
@@ -152,8 +157,8 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 	public double getSupport(Set<Long> itemSet) {
 		SearchHits searchHits;
 		try {
-			searchHits = client.prepareSearch(candidateIndexName + itemSet.size()).setQuery(generateQuery(itemSet))
-					.setTypes(CANDIDATE_TYPE).execute().get().getHits();
+			searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
+					.setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -182,6 +187,17 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 
 	public void close() {
 		client.close();
+	}
+
+	@Override
+	public long countTransactions(Set<Long> itemSet) {
+		try {
+			System.out.println(generateQuery(itemSet));
+			return client.prepareSearch(transactionIndexName).setIndicesOptions(IndicesOptions.strictExpand())
+					.setQuery(generateQuery(itemSet)).execute().get().getHits().getTotalHits();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }
