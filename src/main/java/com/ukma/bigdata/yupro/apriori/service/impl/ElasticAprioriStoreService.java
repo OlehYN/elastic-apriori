@@ -147,7 +147,8 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 	    for (Entry<String, String> value : transaction.entrySet())
 		xContentBuilder.field(value.getKey(), value.getValue());
 	    xContentBuilder.endObject();
-	    bulkRequest.add(client.prepareIndex(indexName, typeName, idName).setSource(xContentBuilder));
+	    bulkRequest
+		    .add(client.prepareIndex(indexName, typeName, transaction.get(idName)).setSource(xContentBuilder));
 
 	    ++bulkSize;
 	} while ((transaction = dataProvider.nextTransaction()) != null);
