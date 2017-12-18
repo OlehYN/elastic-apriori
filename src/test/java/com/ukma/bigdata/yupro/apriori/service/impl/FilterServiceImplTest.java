@@ -2,6 +2,8 @@ package com.ukma.bigdata.yupro.apriori.service.impl;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
+import com.ukma.bigdata.yupro.apriori.service.impl.elastic.FilterServiceImpl;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;

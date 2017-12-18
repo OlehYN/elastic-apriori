@@ -208,11 +208,13 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
     }
 
     @Override
-    public boolean exists(Set<Long> itemSet) {
+    public boolean exists(List<Set<Long>> itemSets) {
 	SearchHits searchHits;
 	try {
-	    searchHits = client.prepareSearch(candidateIndexName + (itemSet.size() - 1))
-		    .setQuery(generateQuery(itemSet)).setTypes(CANDIDATE_TYPE).execute().get().getHits();
+	    BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+	    itemSets.stream().forEach(is -> boolQueryBuilder.must(generateQuery(is)));
+	    searchHits = client.prepareSearch(candidateIndexName + (itemSets.get(0).size() - 1))
+		    .setQuery(boolQueryBuilder).setTypes(CANDIDATE_TYPE).execute().get().getHits();
 	} catch (Exception e) {
 	    throw new RuntimeException(e);
 	}
@@ -280,7 +282,7 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 	    result.add(transactionValues.get(0));
 	}
 
-	LOG.info("Invoke findOthers(List<Long> items) method.");
+	LOG.debug("Invoke findOthers(List<Long> items) method.");
 	return result;
     }
 
@@ -308,7 +310,7 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 	    throw new RuntimeException(e);
 	}
 
-	LOG.info("Invoke saveCandidate(Set<Long> itemSet, double support) method.");
+	LOG.debug("Invoke saveCandidate(Set<Long> itemSet, double support) method.");
     }
 
     private void validateBulk() {
@@ -317,7 +319,7 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
     }
 
     public BulkResponse flush() {
-	LOG.info("Invoke flush() method.");
+	LOG.info("store(): invoke flush() method.");
 	if (bulkSize == 0)
 	    return null;
 	BulkResponse bulkResponse = bulkRequestBuilder.get();

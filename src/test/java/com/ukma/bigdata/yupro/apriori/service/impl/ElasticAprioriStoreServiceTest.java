@@ -15,6 +15,8 @@ import org.junit.runner.RunWith;
 import com.ukma.bigdata.yupro.apriori.service.AprioriService;
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
 import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
+import com.ukma.bigdata.yupro.apriori.service.impl.elastic.PruneServiceImpl;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -54,7 +56,7 @@ public class ElasticAprioriStoreServiceTest {
 	// ejs.setAprioriStoreService(elasticAprioriStoreService);
 	// ejs.join(1);
 
-	ElasticPruneServiceImpl eps = new ElasticPruneServiceImpl();
+	PruneServiceImpl eps = new PruneServiceImpl();
 	eps.prune(1);
     }
 

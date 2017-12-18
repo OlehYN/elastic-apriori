@@ -1,8 +1,9 @@
-package com.ukma.bigdata.yupro.apriori.service.impl;
+package com.ukma.bigdata.yupro.apriori.service.impl.elastic;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
 import com.ukma.bigdata.yupro.apriori.service.FilterService;
+import com.ukma.bigdata.yupro.apriori.service.impl.ElasticAprioriStoreService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,17 +31,20 @@ public class FilterServiceImpl implements FilterService<Long, Long> {
     @Override
     public void filter(int level, double minSupport) {
 	LOG.info("Start frequentSet candidates filtration by support value");
+	LOG.info("filter(): level " + level);
+	int count = 0;
 	Iterator<FrequentSet<Long>> iterator = aprioriStoreService.frequentSetIterator(level);
-
 	while (iterator.hasNext()) {
 	    FrequentSet<Long> frequentItemsSet = iterator.next();
 
 	    if (frequentItemsSet.getSupport() < minSupport) {
 		aprioriStoreService.removeCandidate(frequentItemsSet.getId(), frequentItemsSet.getItems());
-		LOG.info("Candidate is successfuly removed");
+		// LOG.info("Candidate is successfuly removed");
+		LOG.debug("filter(): remove " + frequentItemsSet);
 	    }
 	}
 	LOG.info("Finish frequentSet candidates filtration by support value");
+	LOG.info("filter(): filtered " + count);
 	aprioriStoreService.flush();
 	aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
     }

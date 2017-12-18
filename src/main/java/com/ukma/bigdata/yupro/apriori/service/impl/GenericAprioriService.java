@@ -85,6 +85,12 @@ public class GenericAprioriService implements AprioriService<Long, Long> {
 	    }
 	}
 
+	// int l = 3;
+	// joinService.join(l-1);
+	// pruneService.prune(l);
+	// evaluateService.evaluate(l);
+	// filterService.filter(l, support);
+
 	// TODO use aprioriStoreService to retrieve everything
 	// TODO new service to form AssociationRules
 	return null;

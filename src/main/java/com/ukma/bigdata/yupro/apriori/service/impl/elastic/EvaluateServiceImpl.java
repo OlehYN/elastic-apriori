@@ -1,32 +1,25 @@
-package com.ukma.bigdata.yupro.apriori.service.impl;
+package com.ukma.bigdata.yupro.apriori.service.impl.elastic;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.get.MultiGetRequestBuilder;
 import org.elasticsearch.action.search.MultiSearchRequestBuilder;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.MultiSearchResponse.Item;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.search.aggregations.bucket.terms.LongTerms;
-import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.ukma.bigdata.yupro.apriori.model.ItemSet;
 import com.ukma.bigdata.yupro.apriori.service.EvaluateService;
+import com.ukma.bigdata.yupro.apriori.service.impl.ElasticAprioriStoreService;
+
 import org.springframework.stereotype.Service;
 
 @Service
-public class ElasticEvaluateServiceImpl implements EvaluateService<Long, Long> {
+public class EvaluateServiceImpl implements EvaluateService<Long, Long> {
 
     @Autowired
     private ElasticAprioriStoreService aprioriStoreService;
@@ -34,6 +27,8 @@ public class ElasticEvaluateServiceImpl implements EvaluateService<Long, Long> {
     @Autowired
     @Qualifier("transactionIndexName")
     private String transactionIndex;
+
+    private static final Logger LOG = LoggerFactory.getLogger(EvaluateServiceImpl.class);
 
     @Override
     public void evaluate(int level) {
@@ -98,13 +93,15 @@ public class ElasticEvaluateServiceImpl implements EvaluateService<Long, Long> {
 	// aprioriStoreService.flush();
 	// aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
 
+	LOG.info("evaluate(): level " + level);
+	int count = 0;
 	Iterator<ItemSet> iterator = aprioriStoreService.candidateIterator(level);
 	TransportClient transportClient = aprioriStoreService.getClient();
 	MultiSearchRequestBuilder multiSearchRequestBuilder = transportClient.prepareMultiSearch();
 
 	List<ItemSet> ids = new ArrayList<>();
 
-	int count = 0;
+	int bulkCount = 0;
 	final int maxCount = 5000;
 	while (iterator.hasNext()) {
 	    ItemSet itemSet = iterator.next();
@@ -112,7 +109,8 @@ public class ElasticEvaluateServiceImpl implements EvaluateService<Long, Long> {
 	    ids.add(itemSet);
 
 	    ++count;
-	    if (maxCount == count || (!iterator.hasNext() && count != 0)) {
+	    ++bulkCount;
+	    if (maxCount == bulkCount || (!iterator.hasNext() && bulkCount != 0)) {
 		MultiSearchResponse searchResponse = multiSearchRequestBuilder.get();
 		for (int i = 0; i < searchResponse.getResponses().length; i++) {
 		    Item item = searchResponse.getResponses()[i];
@@ -122,14 +120,16 @@ public class ElasticEvaluateServiceImpl implements EvaluateService<Long, Long> {
 		    double support = ((double) itemCount) / ((double) aprioriStoreService.getSize());
 		    aprioriStoreService.updateCandidate(processingItemSet.getId(), processingItemSet.getItemSet(),
 			    support);
+		    LOG.debug("evaluate(): " + support + " for " + processingItemSet);
 		}
 
 		multiSearchRequestBuilder = transportClient.prepareMultiSearch();
-		count = 0;
+		bulkCount = 0;
 		ids.clear();
 	    }
 	}
 
+	LOG.info("evaluate(): evaluated " + count);
 	aprioriStoreService.flush();
 	aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
     }

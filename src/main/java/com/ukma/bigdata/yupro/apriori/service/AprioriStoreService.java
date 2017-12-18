@@ -27,7 +27,7 @@ public interface AprioriStoreService<TransactionKey, TransactionValue> {
 
     long countTransactions(Set<TransactionValue> itemSet);
 
-    boolean exists(Set<Long> itemSet);
+    boolean exists(List<Set<Long>> itemSet);
 
     Set<Long> findOthers(List<Long> items);
 }

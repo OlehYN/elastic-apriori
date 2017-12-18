@@ -34,7 +34,7 @@ public class Config {
     @Bean("client")
     public TransportClient getClient() throws UnknownHostException {
 	return new PreBuiltTransportClient(Settings.EMPTY)
-		.addTransportAddress(new TransportAddress(InetAddress.getByName("192.168.0.33"), 9300));
+		.addTransportAddress(new TransportAddress(InetAddress.getByName("localhost"), 9300));
     }
 
     @Bean("transactionProvider")
@@ -56,7 +56,7 @@ public class Config {
 
     @Bean("candidateIndexName")
     public String getCandidateIndexName() {
-	return ".candidate".intern();
+	return "dry-candidate".intern();
     }
 
     @Bean("transactionIndexName")

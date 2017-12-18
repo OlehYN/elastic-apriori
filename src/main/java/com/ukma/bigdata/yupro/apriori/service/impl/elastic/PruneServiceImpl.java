@@ -1,4 +1,4 @@
-package com.ukma.bigdata.yupro.apriori.service.impl;
+package com.ukma.bigdata.yupro.apriori.service.impl.elastic;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -6,43 +6,45 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ukma.bigdata.yupro.apriori.model.ItemSet;
 import com.ukma.bigdata.yupro.apriori.service.PruneService;
+import com.ukma.bigdata.yupro.apriori.service.impl.ElasticAprioriStoreService;
+
 import org.springframework.stereotype.Service;
 
 @Service
-public class ElasticPruneServiceImpl implements PruneService<Long, Long> {
+public class PruneServiceImpl implements PruneService<Long, Long> {
 
     @Autowired
     private ElasticAprioriStoreService aprioriStoreService;
+
+    private static final Logger LOG = LoggerFactory.getLogger(PruneServiceImpl.class);
 
     @Override
     public void prune(int level) {
 	int count = 0;
 	int totalCount = 0;
 	Iterator<ItemSet> iterator = aprioriStoreService.candidateIterator(level);
+
+	LOG.info("prune(): level " + level);
 	while (iterator.hasNext()) {
 	    ItemSet itemSet = iterator.next();
-	    boolean isOk = true;
+	    boolean isOk = aprioriStoreService.exists(allSubsets(itemSet.getItemSet()));
 
-	    for (Set<Long> items : allSubsets(itemSet.getItemSet())) {
-		isOk = isOk && aprioriStoreService.exists(items);
-		if (!isOk) {
-		    ++count;
-		    break;
-		}
+	    if (!isOk) {
+		++count;
+		LOG.debug("prune(): remove " + itemSet.getItemSet());
+		aprioriStoreService.removeCandidate(itemSet.getId(), itemSet.getItemSet());
 	    }
 
 	    ++totalCount;
-	    if (!isOk)
-		aprioriStoreService.removeCandidate(itemSet.getId(), itemSet.getItemSet());
-
-	    System.out.println(count);
 	}
 
-	System.out.println("pruned " + count + " of " + totalCount);
+	LOG.info("prune(): " + count + " of " + totalCount);
 	aprioriStoreService.flush();
 	aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
     }
