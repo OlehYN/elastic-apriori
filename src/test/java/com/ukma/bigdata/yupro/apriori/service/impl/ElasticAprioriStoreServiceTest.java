@@ -2,6 +2,7 @@ package com.ukma.bigdata.yupro.apriori.service.impl;
 
 import com.ukma.bigdata.yupro.apriori.config.Config;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -11,9 +12,9 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.ukma.bigdata.yupro.apriori.service.impl.ElasticAprioriStoreService;
-import com.ukma.bigdata.yupro.apriori.service.impl.ElasticJoinServiceImpl;
-
+import com.ukma.bigdata.yupro.apriori.service.AprioriService;
+import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
+import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -24,12 +25,18 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 public class ElasticAprioriStoreServiceTest {
 
     @Autowired
-    private ElasticAprioriStoreService elasticAprioriStoreService;
+    private AprioriStoreService<Long, Long> elasticAprioriStoreService;
 
     @Autowired
     private TransportClient client;
 
-    @Test
+    @Autowired
+    private AprioriService<Long, Long> aprioriService;
+
+    @Autowired
+    private TransactionProvider<Long, Long> transactionProvider;
+
+    // @Test
     public void testIndex() throws IOException, InterruptedException, ExecutionException {
 	Set<Long> itemSet = new HashSet<>();
 	itemSet.add(43L);
@@ -48,7 +55,6 @@ public class ElasticAprioriStoreServiceTest {
 	// ejs.join(1);
 
 	ElasticPruneServiceImpl eps = new ElasticPruneServiceImpl();
-	eps.setAprioriStoreService(elasticAprioriStoreService);
 	eps.prune(1);
     }
 
@@ -57,5 +63,10 @@ public class ElasticAprioriStoreServiceTest {
 	System.out.println(elasticAprioriStoreService.toString());
 	// Iterator<Set<Long>> iterator =
 	// elasticAprioriStoreService.candidateIterator(0);
+    }
+
+    @Test
+    public void test() throws FileNotFoundException {
+	aprioriService.generateAprioriResult(transactionProvider, 2, 0.001, 0.2);
     }
 }

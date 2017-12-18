@@ -2,21 +2,20 @@ package com.ukma.bigdata.yupro.apriori.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.search.SearchHit;
 
-public class CandidateIterator implements Iterator<Set<Long>> {
+public class CandidateIterator implements Iterator<ItemSet> {
 
     private final TransportClient transportClient;
-    private final Queue<Set<Long>> candidates;
+    private final Queue<ItemSet> candidates;
     private final String indexName;
     private final Integer level;
     private String scrollId;
@@ -37,7 +36,7 @@ public class CandidateIterator implements Iterator<Set<Long>> {
     }
 
     @Override
-    public Set<Long> next() {
+    public ItemSet next() {
 	if (this.candidates.isEmpty()) {
 	    provideCandidates();
 	}
@@ -48,10 +47,11 @@ public class CandidateIterator implements Iterator<Set<Long>> {
 	SearchResponse searchResponse;
 	if (scrollId == null) {
 	    searchResponse = transportClient.prepareSearch(String.format("%s%s", this.indexName, this.level))
-		    .setScroll(new TimeValue(60000)).setSize(100).get();
+		    .setScroll(new TimeValue(600000)).setSize(100).get();
 	    this.scrollId = searchResponse.getScrollId();
 	} else {
-	    searchResponse = transportClient.prepareSearchScroll(scrollId).get();
+	    searchResponse = transportClient.prepareSearchScroll(scrollId).setScroll(new TimeValue(600000)).get();
+	    this.scrollId = searchResponse.getScrollId();
 	}
 
 	List<SearchHit> collection = Arrays.asList(searchResponse.getHits().getHits());
@@ -60,7 +60,11 @@ public class CandidateIterator implements Iterator<Set<Long>> {
 	    List<Long> transactionValues = new ArrayList<>();
 	    Arrays.stream(intTransactionValues.stream().mapToLong(i -> i).toArray())
 		    .forEach(lValue -> transactionValues.add(lValue));
-	    this.candidates.add(transactionValues.stream().collect(Collectors.toSet()));
+
+	    ItemSet itemSet = new ItemSet();
+	    itemSet.setItemSet(new HashSet<>(transactionValues));
+	    itemSet.setId(searchHit.getId());
+	    this.candidates.add(itemSet);
 	});
     }
 }

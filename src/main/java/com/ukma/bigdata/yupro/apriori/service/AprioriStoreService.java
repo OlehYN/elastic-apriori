@@ -5,20 +5,23 @@ import java.util.List;
 import java.util.Set;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
+import com.ukma.bigdata.yupro.apriori.model.ItemSet;
 
 public interface AprioriStoreService<TransactionKey, TransactionValue> {
 
-    Iterator<Set<TransactionValue>> candidateIterator(int level);
+    Iterator<ItemSet> candidateIterator(int level);
 
     Iterator<FrequentSet<TransactionValue>> frequentSetIterator(int level);
 
-    void removeCandidate(Set<TransactionValue> itemSet);
+    void removeCandidate(String id, Set<TransactionValue> itemSet);
 
     void saveCandidate(Set<TransactionValue> itemSet);
 
-    void updateCandidate(Set<TransactionValue> itemSet, double support);
+    void saveCandidate(Set<TransactionValue> itemSet, double support);
 
-    double getSupport(Set<TransactionValue> itemSet);
+    void updateCandidate(String id, Set<TransactionValue> itemSet, double support);
+
+    double getSupport(String id, Set<TransactionValue> itemSet);
 
     long getSize();
 

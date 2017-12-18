@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
+import com.ukma.bigdata.yupro.apriori.model.ItemSet;
 import com.ukma.bigdata.yupro.apriori.service.JoinService;
 import org.springframework.stereotype.Service;
 
@@ -17,28 +17,19 @@ import org.springframework.stereotype.Service;
 public class ElasticJoinServiceImpl implements JoinService<Long, Long> {
 
     @Autowired
-    private AprioriStoreService<Long, Long> aprioriStoreService;
-
-    public AprioriStoreService<Long, Long> getAprioriStoreService() {
-	return aprioriStoreService;
-    }
-
-    public void setAprioriStoreService(AprioriStoreService<Long, Long> aprioriStoreService) {
-	this.aprioriStoreService = aprioriStoreService;
-    }
+    private ElasticAprioriStoreService aprioriStoreService;
 
     @Override
     public void join(int level) {
-	Iterator<Set<Long>> iterator = aprioriStoreService.candidateIterator(level);
+	Iterator<ItemSet> iterator = aprioriStoreService.candidateIterator(level);
 
 	if (level == 0) {
 	    while (iterator.hasNext()) {
-		Set<Long> parentId = iterator.next();
-
+		Set<Long> parentId = iterator.next().getItemSet();
 		Long parentValue = parentId.iterator().next();
-		Iterator<Set<Long>> nestedIterator = aprioriStoreService.candidateIterator(level);
+		Iterator<ItemSet> nestedIterator = aprioriStoreService.candidateIterator(level);
 		while (nestedIterator.hasNext()) {
-		    Long sonId = nestedIterator.next().iterator().next();
+		    Long sonId = nestedIterator.next().getItemSet().iterator().next();
 		    if (parentValue.compareTo(sonId) < 0) {
 			Set<Long> toSave = new HashSet<>(parentId);
 			toSave.add(sonId);
@@ -48,7 +39,7 @@ public class ElasticJoinServiceImpl implements JoinService<Long, Long> {
 	    }
 	} else {
 	    while (iterator.hasNext()) {
-		Set<Long> itemSet = iterator.next();
+		Set<Long> itemSet = iterator.next().getItemSet();
 		List<Long> items = new ArrayList<>(itemSet);
 		items.sort((val1, val2) -> val1.compareTo(val2));
 
@@ -67,6 +58,9 @@ public class ElasticJoinServiceImpl implements JoinService<Long, Long> {
 
 	    }
 	}
+
+	aprioriStoreService.flush();
+	aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
     }
 
 }

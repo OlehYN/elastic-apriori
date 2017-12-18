@@ -20,7 +20,7 @@ public class CsvTransactionProviderImpl implements TransactionProvider<Long, Lon
 	private int transactionIdField;
 	private int transactionValueField;
 
-	public CsvTransactionProviderImpl(String transactionsCsv, int transactionIdField, int transactionValueField,
+    public CsvTransactionProviderImpl(String transactionsCsv, int transactionIdField, int transactionValueField,
 			char delimeter, char escape) throws FileNotFoundException {
 		this.reader = new CSVReader(new FileReader(transactionsCsv), delimeter, escape, 1);
 		this.transactionIdField = transactionIdField;

@@ -6,8 +6,11 @@
 package com.ukma.bigdata.yupro.apriori.config;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
+import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
 import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
 import com.ukma.bigdata.yupro.apriori.service.impl.CsvTransactionProviderImpl;
+import com.ukma.bigdata.yupro.apriori.service.impl.ElasticAprioriStoreService;
+
 import java.io.FileNotFoundException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -34,12 +37,17 @@ public class Config {
 		.addTransportAddress(new TransportAddress(InetAddress.getByName("192.168.0.33"), 9300));
     }
 
+    @Bean("transactionProvider")
+    public TransactionProvider<Long, Long> getTransactionProvider() throws FileNotFoundException {
+	return new CsvTransactionProviderImpl("test.csv", 0, 1, ',', '"');
+    }
+
     @Bean("candidateCache")
     @Scope("prototype")
     public Map<Integer, Queue<Set<Long>>> getCandidatesCache() {
 	return new HashMap<>();
     }
-    
+
     @Bean("frequentSetCache")
     @Scope("prototype")
     public Map<Integer, Queue<FrequentSet<Long>>> getFrequentSetCache() {
@@ -55,12 +63,5 @@ public class Config {
     public String getTransactionIndexName() {
 	return ".transaction".intern();
     }
-
-    // @Bean("transactionProvider")
-    // @Scope("singleton")
-    // public TransactionProvider<Long, Long> getTransactionProvider() throws
-    // FileNotFoundException {
-    // return new CsvTransactionProviderImpl("test.csv", 0, 1, ',', '"');
-    // }
 
 }

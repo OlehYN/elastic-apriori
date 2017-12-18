@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
+import com.ukma.bigdata.yupro.apriori.model.ItemSet;
 import com.ukma.bigdata.yupro.apriori.service.PruneService;
 import org.springframework.stereotype.Service;
 
@@ -16,24 +16,35 @@ import org.springframework.stereotype.Service;
 public class ElasticPruneServiceImpl implements PruneService<Long, Long> {
 
     @Autowired
-    private AprioriStoreService<Long, Long> aprioriStoreService;
+    private ElasticAprioriStoreService aprioriStoreService;
 
     @Override
     public void prune(int level) {
-	Iterator<Set<Long>> iterator = aprioriStoreService.candidateIterator(level);
+	int count = 0;
+	int totalCount = 0;
+	Iterator<ItemSet> iterator = aprioriStoreService.candidateIterator(level);
 	while (iterator.hasNext()) {
-	    Set<Long> itemSet = iterator.next();
+	    ItemSet itemSet = iterator.next();
 	    boolean isOk = true;
 
-	    for (Set<Long> items : allSubsets(itemSet)) {
+	    for (Set<Long> items : allSubsets(itemSet.getItemSet())) {
 		isOk = isOk && aprioriStoreService.exists(items);
-		if (!isOk)
+		if (!isOk) {
+		    ++count;
 		    break;
+		}
 	    }
 
+	    ++totalCount;
 	    if (!isOk)
-		aprioriStoreService.removeCandidate(itemSet);
+		aprioriStoreService.removeCandidate(itemSet.getId(), itemSet.getItemSet());
+
+	    System.out.println(count);
 	}
+
+	System.out.println("pruned " + count + " of " + totalCount);
+	aprioriStoreService.flush();
+	aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
     }
 
     public List<Set<Long>> allSubsets(Set<Long> itemSet) {
@@ -46,14 +57,6 @@ public class ElasticPruneServiceImpl implements PruneService<Long, Long> {
 	    result.add(new HashSet<>(tempList));
 	}
 	return result;
-    }
-
-    public AprioriStoreService<Long, Long> getAprioriStoreService() {
-	return aprioriStoreService;
-    }
-
-    public void setAprioriStoreService(AprioriStoreService<Long, Long> aprioriStoreService) {
-	this.aprioriStoreService = aprioriStoreService;
     }
 
 }
