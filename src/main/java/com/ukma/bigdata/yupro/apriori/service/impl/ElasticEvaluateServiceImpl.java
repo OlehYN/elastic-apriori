@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.get.MultiGetRequestBuilder;
+import org.elasticsearch.action.search.MultiSearchRequestBuilder;
+import org.elasticsearch.action.search.MultiSearchResponse;
+import org.elasticsearch.action.search.MultiSearchResponse.Item;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -33,56 +37,100 @@ public class ElasticEvaluateServiceImpl implements EvaluateService<Long, Long> {
 
     @Override
     public void evaluate(int level) {
-	Iterator<ItemSet> iterator = aprioriStoreService.candidateIterator(level);
+	// Iterator<ItemSet> iterator =
+	// aprioriStoreService.candidateIterator(level);
+	//
+	// while (iterator.hasNext()) {
+	// ItemSet itemSet = iterator.next();
+	// double support = ((double)
+	// aprioriStoreService.countTransactions(itemSet.getItemSet()))
+	// / ((double) aprioriStoreService.getSize());
+	// aprioriStoreService.updateCandidate(itemSet.getId(),
+	// itemSet.getItemSet(), support);
+	// }
+	//
+	// aprioriStoreService.flush();
+	// aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
 
+	// Iterator<ItemSet> iterator =
+	// aprioriStoreService.candidateIterator(level);
+	// TransportClient transportClient = aprioriStoreService.getClient();
+	// SearchRequestBuilder searchRequestBuilder =
+	// transportClient.prepareSearch(transactionIndex)
+	// .setIndicesOptions(IndicesOptions.strictExpand());
+	//
+	// List<String> ids = new ArrayList<>();
+	//
+	// int count = 0;
+	// final int maxCount = 5000;
+	// while (iterator.hasNext()) {
+	// ItemSet itemSet = iterator.next();
+	// searchRequestBuilder.addAggregation(AggregationBuilders.filter(itemSet.getId(),
+	// aprioriStoreService.generateQuery(itemSet.getItemSet())));
+	// ids.add(itemSet.getId());
+	//
+	// ++count;
+	// if (maxCount == count || (!iterator.hasNext() && count != 0)) {
+	//
+	// System.out.println(searchRequestBuilder);
+	// SearchResponse searchResponse = searchRequestBuilder.get();
+	// System.out.println(searchResponse);
+	//
+	// searchRequestBuilder =
+	// transportClient.prepareSearch(transactionIndex)
+	// .setIndicesOptions(IndicesOptions.strictExpand());
+	//
+	// for (String id : ids) {
+	// long docCount = ((LongTerms)
+	// searchResponse.getAggregations().get(id)).getBuckets().get(0)
+	// .getDocCount();
+	// double support = ((double) docCount) / ((double)
+	// aprioriStoreService.getSize());
+	// aprioriStoreService.updateCandidate(itemSet.getId(),
+	// itemSet.getItemSet(), support);
+	// }
+	//
+	// count = 0;
+	// ids.clear();
+	// }
+	// }
+	//
+	// aprioriStoreService.flush();
+	// aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
+
+	Iterator<ItemSet> iterator = aprioriStoreService.candidateIterator(level);
+	TransportClient transportClient = aprioriStoreService.getClient();
+	MultiSearchRequestBuilder multiSearchRequestBuilder = transportClient.prepareMultiSearch();
+
+	List<ItemSet> ids = new ArrayList<>();
+
+	int count = 0;
+	final int maxCount = 5000;
 	while (iterator.hasNext()) {
 	    ItemSet itemSet = iterator.next();
-	    double support = ((double) aprioriStoreService.countTransactions(itemSet.getItemSet()))
-		    / ((double) aprioriStoreService.getSize());
-	    aprioriStoreService.updateCandidate(itemSet.getId(), itemSet.getItemSet(), support);
+	    multiSearchRequestBuilder.add(aprioriStoreService.getCountTransactionsRequest(itemSet.getItemSet()));
+	    ids.add(itemSet);
+
+	    ++count;
+	    if (maxCount == count || (!iterator.hasNext() && count != 0)) {
+		MultiSearchResponse searchResponse = multiSearchRequestBuilder.get();
+		for (int i = 0; i < searchResponse.getResponses().length; i++) {
+		    Item item = searchResponse.getResponses()[i];
+		    long itemCount = item.getResponse().getHits().getTotalHits();
+		    ItemSet processingItemSet = ids.get(i);
+
+		    double support = ((double) itemCount) / ((double) aprioriStoreService.getSize());
+		    aprioriStoreService.updateCandidate(processingItemSet.getId(), processingItemSet.getItemSet(),
+			    support);
+		}
+
+		multiSearchRequestBuilder = transportClient.prepareMultiSearch();
+		count = 0;
+		ids.clear();
+	    }
 	}
 
 	aprioriStoreService.flush();
 	aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
-
-//	Iterator<ItemSet> iterator = aprioriStoreService.candidateIterator(level);
-//	TransportClient transportClient = aprioriStoreService.getClient();
-//	SearchRequestBuilder searchRequestBuilder = transportClient.prepareSearch(transactionIndex)
-//		.setIndicesOptions(IndicesOptions.strictExpand());
-//
-//	List<String> ids = new ArrayList<>();
-//
-//	int count = 0;
-//	final int maxCount = 5000;
-//	while (iterator.hasNext()) {
-//	    ItemSet itemSet = iterator.next();
-//	    searchRequestBuilder.addAggregation(AggregationBuilders.filter(itemSet.getId(),
-//		    aprioriStoreService.generateQuery(itemSet.getItemSet())));
-//	    ids.add(itemSet.getId());
-//
-//	    ++count;
-//	    if (maxCount == count || (!iterator.hasNext() && count != 0)) {
-//
-//		System.out.println(searchRequestBuilder);
-//		SearchResponse searchResponse = searchRequestBuilder.get();
-//		System.out.println(searchResponse);
-//
-//		searchRequestBuilder = transportClient.prepareSearch(transactionIndex)
-//			.setIndicesOptions(IndicesOptions.strictExpand());
-//
-//		for (String id : ids) {
-//		    long docCount = ((LongTerms) searchResponse.getAggregations().get(id)).getBuckets().get(0)
-//			    .getDocCount();
-//		    double support = ((double) docCount) / ((double) aprioriStoreService.getSize());
-//		    aprioriStoreService.updateCandidate(itemSet.getId(), itemSet.getItemSet(), support);
-//		}
-//
-//		count = 0;
-//		ids.clear();
-//	    }
-//	}
-//
-//	aprioriStoreService.flush();
-//	aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
     }
 }

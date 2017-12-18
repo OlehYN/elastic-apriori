@@ -57,7 +57,7 @@ public class FrequentSetIterator implements Iterator<FrequentSet<Long>> {
 	List<SearchHit> collection = Arrays.asList(searchResponse.getHits().getHits());
 	collection.stream().forEach(searchHit -> {
 	    List<Integer> intTransactionValues = (List<Integer>) searchHit.getSourceAsMap().get("transactionValues");
-	    Double support = (Double) searchHit.field("support").getValue();
+	    Double support = (Double) searchHit.getSourceAsMap().get("support");
 	    List<Long> transactionValues = new ArrayList<>();
 	    Arrays.stream(intTransactionValues.stream().mapToLong(i -> i).toArray())
 		    .forEach(lValue -> transactionValues.add(lValue));

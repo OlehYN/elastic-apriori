@@ -17,6 +17,7 @@ import org.apache.commons.logging.Log;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -250,6 +251,11 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 	} catch (Exception e) {
 	    throw new RuntimeException(e);
 	}
+    }
+
+    public SearchRequest getCountTransactionsRequest(Set<Long> itemSet) {
+	return client.prepareSearch(transactionIndexName).setIndicesOptions(IndicesOptions.strictExpand()).setSize(0)
+		.setQuery(generateQuery(itemSet)).request();
     }
 
     @Override
