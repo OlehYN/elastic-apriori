@@ -16,6 +16,9 @@ import javax.annotation.PostConstruct;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.MultiGetRequestBuilder;
+import org.elasticsearch.action.search.MultiSearchRequestBuilder;
+import org.elasticsearch.action.search.MultiSearchResponse.Item;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.transport.TransportClient;
@@ -249,17 +252,22 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 
     @Override
     public boolean exists(List<Set<Long>> itemSets) {
-	SearchHits searchHits;
+	Item[] items;
 	try {
-	    BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-	    itemSets.stream().forEach(is -> boolQueryBuilder.must(generateQuery(is)));
-	    searchHits = client.prepareSearch(candidateIndexName + (itemSets.get(0).size() - 1))
-		    .setQuery(boolQueryBuilder).setTypes(CANDIDATE_TYPE).execute().get().getHits();
+	    MultiSearchRequestBuilder bulkRequestGenerator = client.prepareMultiSearch();
+	    itemSets.stream()
+		    .forEach(is -> bulkRequestGenerator
+			    .add(client.prepareSearch(candidateIndexName + (itemSets.get(0).size() - 1))
+				    .setQuery(generateQuery(is)).setTypes(CANDIDATE_TYPE).request()));
+	    items = bulkRequestGenerator.get().getResponses();
 	} catch (Exception e) {
 	    throw new RuntimeException(e);
 	}
 
-	return searchHits.getTotalHits() != 0;
+	for (Item item : items)
+	    if (item.getResponse().getHits().getTotalHits() == 0)
+		return false;
+	return true;
     }
 
     public QueryBuilder generateQuery(Collection<Long> itemSet) {
