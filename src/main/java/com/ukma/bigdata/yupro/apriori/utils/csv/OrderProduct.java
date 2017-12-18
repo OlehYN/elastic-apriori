@@ -5,6 +5,7 @@ public class OrderProduct {
     private String orderId;
     private String productId;
     private String addToCartOrder;
+    private Product product;
 
     public OrderProduct(String orderId, String productId, String addToCartOrder) {
         this.orderId = orderId;
@@ -36,9 +37,18 @@ public class OrderProduct {
         this.addToCartOrder = addToCartOrder;
     }
 
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
     @Override
     public String toString() {
-        return "OrderProduct{" + "orderId=" + orderId + ", productId="
-                + productId + ", addToCartOrder=" + addToCartOrder + '}';
+        return "OrderProduct{" + "orderId=" + orderId + ", productId=" +
+                productId + ", addToCartOrder=" + addToCartOrder + ", product=" +
+                product + '}';
     }
 }

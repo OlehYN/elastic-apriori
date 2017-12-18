@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class CsvJoiner implements ManyToManyJoiner<Product, OrderProduct, Order>{
+public class OrderToProductJoiner implements ManyToManyJoiner<Product, OrderProduct, Order>{
     
     @Override
-    public List<Order> getJoinedReversed(Collection<Order> orders,
+    public Collection<Order> getReversedJoin(Collection<Order> orders,
             Collection<OrderProduct> orderProducts,
             Collection<Product> products) {
         Map<String, List<OrderProduct>> map = orderProducts.stream()
@@ -25,7 +25,7 @@ public class CsvJoiner implements ManyToManyJoiner<Product, OrderProduct, Order>
     }
 
     @Override
-    public Collection<Product> getJoined(Collection<Product> en1,
+    public Collection<Product> getJoin(Collection<Product> en1,
             Collection<OrderProduct> en1ToEn2, Collection<Order> en2) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
