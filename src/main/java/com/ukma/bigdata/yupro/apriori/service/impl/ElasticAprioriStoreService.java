@@ -13,13 +13,13 @@ import java.util.concurrent.ExecutionException;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.logging.Log;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -33,9 +33,11 @@ import com.ukma.bigdata.yupro.apriori.model.FrequentSetIterator;
 import com.ukma.bigdata.yupro.apriori.model.ItemSet;
 import com.ukma.bigdata.yupro.apriori.model.Transaction;
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
+import com.ukma.bigdata.yupro.apriori.service.DataProvider;
 import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.*;
@@ -85,41 +87,78 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 
     @PostConstruct
     public void init() throws IOException, InterruptedException, ExecutionException {
+	if (!client.admin().indices().exists(new IndicesExistsRequest(transactionIndexName)).get().isExists()) {
+	    readCsv(transactionProvider, transactionIndexName);
+	}
+	size = (int) client.prepareSearch(this.transactionIndexName).setIndicesOptions(IndicesOptions.strictExpand())
+		.setSize(0).execute().get().getHits().getTotalHits();
+	bulkRequestBuilder = client.prepareBulk();
+    }
+
+    public void readCsv(TransactionProvider<Long, Long> transactionProvider, String transactionIndexName)
+	    throws IOException {
 	Transaction<Long, Long> transaction = transactionProvider.nextTransaction();
 	BulkRequestBuilder bulkRequest = client.prepareBulk();
-
 	int bulkSize = 0;
-	if (!client.admin().indices().exists(new IndicesExistsRequest(transactionIndexName)).get().isExists()) {
-	    do {
-		if (bulkSize == transactionBufferSize) {
-		    bulkSize = 0;
-		    BulkResponse bulkResponse = bulkRequest.get();
-		    if (bulkResponse.hasFailures()) {
-			throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
-		    }
-		    bulkRequest = client.prepareBulk();
-		}
-
-		bulkRequest.add(client
-			.prepareIndex(transactionIndexName, TRANSACTION_TYPE,
-				String.valueOf(transaction.getTransactionKey()))
-			.setSource(jsonBuilder().startObject().field("transactionId", transaction.getTransactionKey())
-				.field("transactionValues", transaction.getTransactionValue()).endObject()));
-
-		++bulkSize;
-	    } while ((transaction = transactionProvider.nextTransaction()) != null);
-
-	    if (bulkSize != 0) {
+	do {
+	    if (bulkSize == transactionBufferSize) {
+		bulkSize = 0;
 		BulkResponse bulkResponse = bulkRequest.get();
 		if (bulkResponse.hasFailures()) {
 		    throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
 		}
 		bulkRequest = client.prepareBulk();
 	    }
+
+	    bulkRequest.add(client
+		    .prepareIndex(transactionIndexName, TRANSACTION_TYPE,
+			    String.valueOf(transaction.getTransactionKey()))
+		    .setSource(jsonBuilder().startObject().field("transactionId", transaction.getTransactionKey())
+			    .field("transactionValues", transaction.getTransactionValue()).endObject()));
+
+	    ++bulkSize;
+	} while ((transaction = transactionProvider.nextTransaction()) != null);
+
+	if (bulkSize != 0) {
+	    BulkResponse bulkResponse = bulkRequest.get();
+	    if (bulkResponse.hasFailures()) {
+		throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
+	    }
+	    bulkRequest = client.prepareBulk();
 	}
-	size = (int) client.prepareSearch(this.transactionIndexName).setIndicesOptions(IndicesOptions.strictExpand())
-		.setSize(0).execute().get().getHits().getTotalHits();
-	bulkRequestBuilder = client.prepareBulk();
+    }
+
+    public void readCsv(DataProvider dataProvider, String indexName, String typeName, String idName)
+	    throws IOException {
+	Map<String, String> transaction = dataProvider.nextTransaction();
+	BulkRequestBuilder bulkRequest = client.prepareBulk();
+	int bulkSize = 0;
+	do {
+	    if (bulkSize == transactionBufferSize) {
+		bulkSize = 0;
+		BulkResponse bulkResponse = bulkRequest.get();
+		if (bulkResponse.hasFailures()) {
+		    throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
+		}
+		bulkRequest = client.prepareBulk();
+	    }
+
+	    XContentBuilder xContentBuilder = jsonBuilder().startObject();
+	    for (Entry<String, String> value : transaction.entrySet())
+		xContentBuilder.field(value.getKey(), value.getValue());
+	    xContentBuilder.endObject();
+	    bulkRequest.add(client.prepareIndex(indexName, typeName, idName).setSource(xContentBuilder));
+
+	    ++bulkSize;
+	} while ((transaction = dataProvider.nextTransaction()) != null);
+
+	if (bulkSize != 0) {
+	    BulkResponse bulkResponse = bulkRequest.get();
+	    if (bulkResponse.hasFailures()) {
+		throw new IllegalArgumentException(bulkResponse.buildFailureMessage());
+	    }
+	    bulkRequest = client.prepareBulk();
+	}
     }
 
     @Override

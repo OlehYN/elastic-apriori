@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 
 import com.ukma.bigdata.yupro.apriori.service.AprioriService;
 import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
+import com.ukma.bigdata.yupro.apriori.service.DataProvider;
 import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
 import com.ukma.bigdata.yupro.apriori.service.impl.elastic.PruneServiceImpl;
 
@@ -27,7 +28,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 public class ElasticAprioriStoreServiceTest {
 
     @Autowired
-    private AprioriStoreService<Long, Long> elasticAprioriStoreService;
+    private ElasticAprioriStoreService elasticAprioriStoreService;
 
     @Autowired
     private TransportClient client;
@@ -37,6 +38,9 @@ public class ElasticAprioriStoreServiceTest {
 
     @Autowired
     private TransactionProvider<Long, Long> transactionProvider;
+
+    @Autowired
+    private DataProvider dataProvider;
 
     // @Test
     public void testIndex() throws IOException, InterruptedException, ExecutionException {
@@ -68,7 +72,10 @@ public class ElasticAprioriStoreServiceTest {
     }
 
     @Test
-    public void test() throws FileNotFoundException {
-	aprioriService.generateAprioriResult(transactionProvider, 2, 0.001, 0.2);
+    public void test() throws IOException {
+	// aprioriService.generateAprioriResult(transactionProvider, 2, 0.001,
+	// 0.2);
+	elasticAprioriStoreService.readCsv(dataProvider, "bd-products", "products", "product_id");
+
     }
 }

@@ -6,12 +6,12 @@
 package com.ukma.bigdata.yupro.apriori.config;
 
 import com.ukma.bigdata.yupro.apriori.model.FrequentSet;
-import com.ukma.bigdata.yupro.apriori.service.AprioriStoreService;
+import com.ukma.bigdata.yupro.apriori.service.DataProvider;
 import com.ukma.bigdata.yupro.apriori.service.TransactionProvider;
+import com.ukma.bigdata.yupro.apriori.service.impl.CsvDataProviderImpl;
 import com.ukma.bigdata.yupro.apriori.service.impl.CsvTransactionProviderImpl;
-import com.ukma.bigdata.yupro.apriori.service.impl.ElasticAprioriStoreService;
-
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -40,6 +40,11 @@ public class Config {
     @Bean("transactionProvider")
     public TransactionProvider<Long, Long> getTransactionProvider() throws FileNotFoundException {
 	return new CsvTransactionProviderImpl("test.csv", 0, 1, ',', '"');
+    }
+
+    @Bean("dataProvider")
+    public DataProvider getDataProvider() throws IOException {
+	return new CsvDataProviderImpl("C:\\Users\\Oleh Yanivskyy\\Desktop\\GlybAtack\\products.csv", ',', '"');
     }
 
     @Bean("candidateCache")
