@@ -41,6 +41,7 @@ public class FilterServiceImpl implements FilterService<Long, Long> {
 		aprioriStoreService.removeCandidate(frequentItemsSet.getId(), frequentItemsSet.getItems());
 		// LOG.info("Candidate is successfuly removed");
 		LOG.debug("filter(): remove " + frequentItemsSet);
+		++count;
 	    }
 	}
 	LOG.info("Finish frequentSet candidates filtration by support value");
