@@ -36,9 +36,6 @@ public class OrderProductToProductLazyJoinerTest {
         CsvOrderProductParser copp = new CsvOrderProductParser(
                 orderProductsString);
 
-        OneToOneLazyJoiner<OrderProduct, Product> joiner = new OrderProductToProductLazyJoiner();
-        Collection<OrderProduct> orderProducts = joiner.getJoin(copp, products);
-
         Object[] FILE_HEADER = {"order_id", "aisle_id"};
         String path = "/home/michael/Ukma5/elastic-apriori/src/test/resources/csv/result.csv";
         FileWriter fileWriter = null;
@@ -47,12 +44,20 @@ public class OrderProductToProductLazyJoinerTest {
         fileWriter = new FileWriter(path);
         csvFilePrinter = new CSVPrinter(fileWriter, csvFileFormat);
         csvFilePrinter.printRecord(FILE_HEADER);
-        for (OrderProduct op : orderProducts) {
+        int flushCount = 0;
+        while (copp.hasNext()) {
+            if (flushCount > 100) {
+                fileWriter.flush();
+                flushCount = 0;
+            }
+            OrderProduct op = copp.next();
+            op.setProduct(products.get((String) op.getProductId()));
             csvFilePrinter.printRecord(
                     Arrays.asList(op.getOrderId(), op.getProduct().getAisleId()));
+            flushCount++;
         }
         fileWriter.flush();
-	fileWriter.close();
+        fileWriter.close();
         csvFilePrinter.close();
     }
 
