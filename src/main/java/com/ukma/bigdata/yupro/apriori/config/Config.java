@@ -39,12 +39,13 @@ public class Config {
 
     @Bean("transactionProvider")
     public TransactionProvider<Long, Long> getTransactionProvider() throws FileNotFoundException {
-	return new CsvTransactionProviderImpl("test.csv", 0, 1, ',', '"');
+	return new CsvTransactionProviderImpl("C:\\Users\\Oleh Yanivskyy\\Desktop\\GlybAtack\\result.csv", 0, 1, ',',
+		'"');
     }
 
     @Bean("dataProvider")
     public DataProvider getDataProvider() throws IOException {
-	return new CsvDataProviderImpl("C:\\Users\\Oleh Yanivskyy\\Desktop\\GlybAtack\\products.csv", ',', '"');
+	return new CsvDataProviderImpl("C:\\Users\\Oleh Yanivskyy\\Desktop\\GlybAtack\\orders.csv", ',', '"');
     }
 
     @Bean("candidateCache")
@@ -61,7 +62,7 @@ public class Config {
 
     @Bean("candidateIndexName")
     public String getCandidateIndexName() {
-	return "dry-candidate".intern();
+	return ".candidate".intern();
     }
 
     @Bean("transactionIndexName")

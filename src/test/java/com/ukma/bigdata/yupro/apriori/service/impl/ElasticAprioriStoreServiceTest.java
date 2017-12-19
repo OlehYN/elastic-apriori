@@ -73,9 +73,9 @@ public class ElasticAprioriStoreServiceTest {
 
     @Test
     public void test() throws IOException {
-	// aprioriService.generateAprioriResult(transactionProvider, 2, 0.001,
-	// 0.2);
-	elasticAprioriStoreService.readCsv(dataProvider, "bd-products", "products", "product_id");
+	 //aprioriService.generateAprioriResult(transactionProvider, 2, 0.001,
+	 //0.2);
+	elasticAprioriStoreService.readCsv(dataProvider, "bd-orders", "orders", "order_id");
 
     }
 }

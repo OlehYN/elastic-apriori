@@ -250,6 +250,11 @@ public class ElasticAprioriStoreService implements AprioriStoreService<Long, Lon
 		.getSourceAsMap().get("support");
     }
 
+    public double getSupport(Set<Long> itemSet) {
+	return (double) client.prepareSearch(candidateIndexName + (itemSet.size() - 1)).setQuery(generateQuery(itemSet))
+		.get().getHits().getHits()[0].getSourceAsMap().get("support");
+    }
+
     @Override
     public boolean exists(List<Set<Long>> itemSets) {
 	Item[] items;
