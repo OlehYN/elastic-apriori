@@ -5,11 +5,9 @@
  */
 package com.ukma.bigdata.yupro.apriori.utils.csv;
 
-import com.ukma.bigdata.yupro.apriori.utils.OneToOneLazyJoiner;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;

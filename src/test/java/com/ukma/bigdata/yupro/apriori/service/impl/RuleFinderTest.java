@@ -22,6 +22,5 @@ public class RuleFinderTest {
     @Test
     public void test() throws IOException {
 	System.out.println(ruleFinder.findRules(0.2, 3));
-
     }
 }

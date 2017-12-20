@@ -56,6 +56,7 @@ public class CandidateIterator implements Iterator<ItemSet> {
 
 	List<SearchHit> collection = Arrays.asList(searchResponse.getHits().getHits());
 	collection.stream().forEach(searchHit -> {
+	    @SuppressWarnings("unchecked")
 	    List<Integer> intTransactionValues = (List<Integer>) searchHit.getSourceAsMap().get("transactionValues");
 	    List<Long> transactionValues = new ArrayList<>();
 	    Arrays.stream(intTransactionValues.stream().mapToLong(i -> i).toArray())

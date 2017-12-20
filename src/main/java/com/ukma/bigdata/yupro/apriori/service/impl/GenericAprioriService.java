@@ -1,6 +1,5 @@
 package com.ukma.bigdata.yupro.apriori.service.impl;
 
-import com.ukma.bigdata.yupro.apriori.model.AprioriResult;
 import com.ukma.bigdata.yupro.apriori.service.AprioriService;
 import com.ukma.bigdata.yupro.apriori.service.EvaluateService;
 import com.ukma.bigdata.yupro.apriori.service.FilterService;
@@ -48,52 +47,47 @@ public class GenericAprioriService implements AprioriService<Long, Long> {
     private String candidateIndexName;
 
     @Override
-    public AprioriResult<Long> generateAprioriResult(TransactionProvider<Long, Long> transactionProvider, int level,
-	    double support, double confidence) {
+    public void generateAprioriResult(TransactionProvider<Long, Long> transactionProvider, int level, double support,
+	    double confidence) {
+	for (int i = 0; i < level; i++)
+	    proceedLevel(support, i, level);
 
-//	for (int i = 0; i < level; i++) {
-//	    if (i == 0) {
-//		SearchResponse searchResponse = client.prepareSearch(this.indexName)
-//			.addAggregation(AggregationBuilders.terms("agg0").field("transactionValues")
-//				.size((int) aprioriStoreService.getSize())
-//				.minDocCount((int) (support * aprioriStoreService.getSize())))
-//			.get();
-//		(((LongTerms) searchResponse.getAggregations().get("agg0")).getBuckets()).stream().forEach(a -> {
-//		    Set<Long> candidate = new HashSet<>();
-//		    candidate.add((Long) a.getKey());
-//		    double candidiateSupport = ((double) a.getDocCount()) / aprioriStoreService.getSize();
-//		    aprioriStoreService.saveCandidate(candidate, candidiateSupport);
-//		});
-//		aprioriStoreService.flush();
-//		aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
-//	    }
-//	    if (i > 1) {
-//		pruneService.prune(i);
-//		System.out.println("pruned...");
-//	    }
-//	    if (i != 0) {
-//		evaluateService.evaluate(i);
-//		System.out.println("evaluated...");
-//	    }
-//	    if (i != 0) {
-//		filterService.filter(i, support);
-//		System.out.println("filtered...");
-//	    }
-//	    if (i != level - 1) {
-//		joinService.join(i);
-//		System.out.println("joined...");
-//	    }
-//	}
+    }
 
-	 int l = 4;
-	 joinService.join(l-1);
-	 pruneService.prune(l);
-	 evaluateService.evaluate(l);
-	 filterService.filter(l, support);
+    @Override
+    public void proceedLevel(double support, int level, int maxLevel) {
+	if (level == 0) {
+	    SearchResponse searchResponse = client.prepareSearch(this.indexName)
+		    .addAggregation(AggregationBuilders.terms("agg0").field("transactionValues")
+			    .size((int) aprioriStoreService.getSize())
+			    .minDocCount((int) (support * aprioriStoreService.getSize())))
+		    .get();
+	    (((LongTerms) searchResponse.getAggregations().get("agg0")).getBuckets()).stream().forEach(a -> {
+		Set<Long> candidate = new HashSet<>();
+		candidate.add((Long) a.getKey());
+		double candidiateSupport = ((double) a.getDocCount()) / aprioriStoreService.getSize();
+		aprioriStoreService.saveCandidate(candidate, candidiateSupport);
+	    });
+	    aprioriStoreService.flush();
+	    aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
+	}
+	if (level > 1) {
+	    pruneService.prune(level);
+	    System.out.println("pruned...");
+	}
+	if (level != 0) {
+	    evaluateService.evaluate(level);
+	    System.out.println("evaluated...");
+	}
+	if (level != 0) {
+	    filterService.filter(level, support);
+	    System.out.println("filtered...");
+	}
+	if (level != maxLevel - 1) {
+	    joinService.join(level);
+	    System.out.println("joined...");
+	}
 
-	// TODO use aprioriStoreService to retrieve everything
-	// TODO new service to form AssociationRules
-	return null;
     }
 
 }

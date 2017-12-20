@@ -73,7 +73,8 @@ public class FilterServiceImplTest {
         frequentSet2.setItems(itemSet);
         frequentSet2.setSupport(0.7);
 
-        Set<FrequentSet<Long>> set = new HashSet<FrequentSet<Long>>() {
+        @SuppressWarnings("serial")
+	Set<FrequentSet<Long>> set = new HashSet<FrequentSet<Long>>() {
             {
                 add(frequentSet1);
                 add(frequentSet2);

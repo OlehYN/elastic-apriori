@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Scope;
 @ComponentScan(basePackages = "com.ukma.bigdata.yupro.apriori")
 public class Config {
 
+    @SuppressWarnings("resource")
     @Bean("client")
     public TransportClient getClient() throws UnknownHostException {
 	return new PreBuiltTransportClient(Settings.EMPTY)

@@ -1,9 +1,8 @@
 package com.ukma.bigdata.yupro.apriori.service;
 
-import com.ukma.bigdata.yupro.apriori.model.AprioriResult;
-
 public interface AprioriService<TransactionKey, TransactionValue> {
-	AprioriResult<TransactionValue> generateAprioriResult(
-			TransactionProvider<TransactionKey, TransactionValue> transactionProvider, int level,
-			double support, double confidence);
+    void generateAprioriResult(TransactionProvider<TransactionKey, TransactionValue> transactionProvider, int level,
+	    double support, double confidence);
+
+    void proceedLevel(double support, int level, int maxLevel);
 }
