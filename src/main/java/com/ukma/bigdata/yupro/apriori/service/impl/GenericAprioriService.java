@@ -71,6 +71,7 @@ public class GenericAprioriService implements AprioriService<Long, Long> {
 	    aprioriStoreService.flush();
 	    aprioriStoreService.getClient().admin().indices().prepareRefresh().get();
 	}
+
 	if (level > 1) {
 	    pruneService.prune(level);
 	    System.out.println("pruned...");

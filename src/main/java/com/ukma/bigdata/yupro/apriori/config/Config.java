@@ -22,31 +22,50 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 
 @Configuration
 @ComponentScan(basePackages = "com.ukma.bigdata.yupro.apriori")
+@PropertySource("apriori.properties")
 public class Config {
 
-    @SuppressWarnings("resource")
+    @Value("${elasticsearch.host}")
+    private String elasticsearchHost;
+
+    @Value("${elasticsearch.port}")
+    private Integer elasticsearchPort;
+
+    @Value("${elasticsearch.candidate.name}")
+    private String candidateIndexName;
+
+    @Value("${elasticsearch.transaction.name}")
+    private String transactionIndexName;
+
+    @Value("${transaction-provider.path}")
+    private String transactionProviderPath;
+
+    @Value("${data-provider.path}")
+    private String dataProviderPath;
+
     @Bean("client")
     public TransportClient getClient() throws UnknownHostException {
 	return new PreBuiltTransportClient(Settings.EMPTY)
-		.addTransportAddress(new TransportAddress(InetAddress.getByName("localhost"), 9300));
+		.addTransportAddress(new TransportAddress(InetAddress.getByName(elasticsearchHost), elasticsearchPort));
     }
 
     @Bean("transactionProvider")
     public TransactionProvider<Long, Long> getTransactionProvider() throws FileNotFoundException {
-	return new CsvTransactionProviderImpl("C:\\Users\\Oleh Yanivskyy\\Desktop\\GlybAtack\\result.csv", 0, 1, ',',
-		'"');
+	return new CsvTransactionProviderImpl(transactionProviderPath, 0, 1, ',', '"');
     }
 
     @Bean("dataProvider")
     public DataProvider getDataProvider() throws IOException {
-	return new CsvDataProviderImpl("C:\\Users\\Oleh Yanivskyy\\Desktop\\GlybAtack\\orders.csv", ',', '"');
+	return new CsvDataProviderImpl(dataProviderPath, ',', '"');
     }
 
     @Bean("candidateCache")
@@ -63,12 +82,12 @@ public class Config {
 
     @Bean("candidateIndexName")
     public String getCandidateIndexName() {
-	return ".candidate".intern();
+	return candidateIndexName;
     }
 
     @Bean("transactionIndexName")
     public String getTransactionIndexName() {
-	return ".transaction".intern();
+	return transactionIndexName;
     }
 
 }

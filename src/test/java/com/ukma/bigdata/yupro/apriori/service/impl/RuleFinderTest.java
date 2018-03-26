@@ -1,8 +1,12 @@
 package com.ukma.bigdata.yupro.apriori.service.impl;
 
 import com.ukma.bigdata.yupro.apriori.config.Config;
+import com.ukma.bigdata.yupro.apriori.model.Rule;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -21,6 +25,8 @@ public class RuleFinderTest {
 
     @Test
     public void test() throws IOException {
-	System.out.println(ruleFinder.findRules(0.2, 3));
+	List<Rule<Long>> rules = new ArrayList<>(ruleFinder.findRules(0.2, 3));
+	rules.sort((r1, r2) -> Double.valueOf(r1.getConfidence()).compareTo(Double.valueOf(r2.getConfidence())));
+	System.out.println(rules);
     }
 }
